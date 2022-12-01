@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Union, cast
+from typing import Union, cast, Generic, Optional, TypeVar
 import re
 
 
@@ -16,6 +16,64 @@ def tokenize(tree: str) -> list[str]:
     ['(', 'A', '(', 'B', 'C', ')', ')']
     """
     return re.findall(r'[()]|\w+', tree)
+
+T = TypeVar('T')
+
+@dataclass
+class Link(Generic[T]):
+    """A link in a linked list."""
+
+    head: T
+    tail: List[T]
+
+    def __init__(self, head):
+        self.head = head
+        self.next = None
+
+
+List = Optional[Link[T]]
+
+
+class Stack(Generic[T]):
+    """A stack of elements of (generic) type T."""
+
+    def __init__(self) -> None:
+        """Create a new stack of values of type T."""
+        # FIXME: code here
+        self.stack = None
+
+    def push(self, x: T) -> None:
+        """Push x on the top of this stack."""
+        # FIXME: code here
+        if self.stack == None:
+            self.stack = Link(x)
+        else:
+            new_node = Link(x)
+            new_node.next = self.stack
+            self.stack = new_node
+
+    def top(self) -> T:
+        """Return the top of the stack."""
+        # FIXME: code here
+        if self.is_empty():
+            return None
+        else:
+            return self.stack.head
+
+    def pop(self) -> T:
+        """Pop the top element off the stack and return it."""
+        # FIXME: code here
+        if self.is_empty():
+            return None
+        else:
+            pop_node = self.stack.head
+            self.stack = self.stack.next
+            return pop_node
+
+    def is_empty(self) -> bool:
+        """Test if the stack is empty."""
+        # FIXME: code here
+        return True if self.stack == None else False
 
 
 @dataclass(repr=False)
@@ -57,4 +115,35 @@ def parse(tree: str) -> Tree:
     >>> parse("(A, (B, C))")
     (A,(B,C))
     """
-    ...
+    stack: list[Tree] = []
+
+    tree = tokenize(tree)
+    for ele in tree:
+        match ele:
+            case ')':
+                node = []
+                while stack[-1] != '(':
+                    node.append(stack.pop())
+                stack.pop() # popping the '('
+
+                children = []
+                while node:
+                    children.append(node.pop()) # basically reversing the node
+                
+                stack.append(Node(children)) # append children as Node to stack
+            case '(':
+                stack.append(ele)
+            case _:
+                stack.append(Leaf(ele))
+    
+    return stack.pop() # remove the bracket
+
+def main():
+    print(parse("(A, (B, C))"))
+    print(parse("((A,B), (C,D), E)"))
+    print(parse("((A,(B,C)), (D,E), F)"))
+    print(parse("((A,(B,C)), (D,E), F)"))
+    print(parse("(A, (B, C), (D,(E,F)), (G,(H,(I,J))))"))
+
+if __name__ == "__main__":
+    main()
