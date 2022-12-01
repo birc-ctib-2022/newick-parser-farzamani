@@ -100,7 +100,6 @@ class Node:
 
     def __str__(self) -> str:
         """Simplified text representation."""
-        pass
         return f"({','.join(str(child) for child in self.children)})"
     __repr__ = __str__
 
@@ -116,33 +115,35 @@ def parse(tree: str) -> Tree:
     >>> parse("(A, (B, C))")
     (A,(B,C))
     """
-    stack = Stack()
+    stack: list[Tree] = []
 
     tree = tokenize(tree)
     for ele in tree:
         match ele:
             case ')':
-                node = Stack()
-                node.push(ele)
-                while stack.top() != '(':
-                    node.push(stack.pop())
-                node.push(stack.pop())
+                node = []
+                while stack[-1] != '(':
+                    node.append(stack.pop())
+                stack.pop() # popping the '('
 
-                children = Stack()
-                while node.is_empty() == False:
-                    children.push(node.pop())
+                children = []
+                while node:
+                    children.append(node.pop()) # basically reversing the node
                 
-                stack.push(Node(node))
+                stack.append(Node(children)) # append children as Node to stack
             case '(':
-                stack.push(ele)
+                stack.append(ele)
             case _:
-                stack.push(Leaf(ele))
+                stack.append(Leaf(ele))
     
-    return cast(Tree, stack.pop())
+    return stack.pop() # remove the bracket
 
 def main():
     print(parse("(A, (B, C))"))
-    
+    print(parse("((A,B), (C,D), E)"))
+    print(parse("((A,(B,C)), (D,E), F)"))
+    print(parse("((A,(B,C)), (D,E), F)"))
+    print(parse("(A, (B, C), (D,(E,F)), (G,(H,(I,J))))"))
 
 if __name__ == "__main__":
     main()
